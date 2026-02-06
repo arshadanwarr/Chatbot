@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  chatbot-api:
+    build: .
+    container_name: chatbot-api
+    ports:
+      - "8000:8000"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - DEFAULT_MODEL=llama2
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+    depends_on:
+      - ollama
+    volumes:
+      - ./:/app
+    restart: unless-stopped
+    networks:
+      - chatbot-network
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    restart: unless-stopped
+    networks:
+      - chatbot-network
+
+  # Optional: Redis for session management
+  redis:
+    image: redis:7-alpine
+    container_name: chatbot-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - chatbot-network
+    profiles:
+      - with-redis
+
+volumes:
+  ollama-data:
+  redis-data:
+
+networks:
+  chatbot-network:
+    driver: bridge
